@@ -230,7 +230,7 @@ class Beachline(object):
         child = Beachline(item)
         child.parent = self
         self.l = child
-        
+
     def get_nearest_arc_node_by_x(self, new_site):
         if self.item==None: #beachline vuota. In tal caso non esiste un sito più vicino
             return None
@@ -272,7 +272,7 @@ class Beachline(object):
         while not cur_node.is_leaf():
             cur_node=cur_node.l
         return cur_node, redge
-    
+
     def add_start_arc(self, new_arc_site, nearest_arc_node=None): 
         if nearest_arc_node==None:
             self.item=new_arc_site
@@ -469,6 +469,8 @@ class Voronoi(object):
         ax.add_collection(lc)
         ax.margins(0.1)
         xs, ys = zip(*[[p.x,p.y] for p in self.sites])
+        ax.plot(xs, ys, 'ro')
+        fig.savefig(file_name)
 
     def get_patches(self, xrange=(-2,2), yrange = (-2,2)):
         v1 = self.run()
@@ -479,7 +481,6 @@ class Voronoi(object):
             ps_dict[edge.pr].append((edge.start, edge.end))
         print(ps_dict)
 
-        
 def main(argv=sys.argv):
     xs = np.random.uniform(-2, 2, 100)
     ys = np.random.uniform(-2, 2, 100)
