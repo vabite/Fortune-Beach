@@ -2,7 +2,7 @@
 
 define([], function(){
 
-  return function Segment(pl, pr, ps, pe){
+  function Segment(pl, pr, ps, pe){
     this.pl=pl; //left symmetry point
     this.pr=pr; //right symmetry point
     this.ps=ps; //start point
@@ -11,5 +11,14 @@ define([], function(){
     this.hp=(this.pl[0]<this.pr[0] || (this.pl[0]===this.pr[0] && this.pl[1]>this.pr[1])) ? 1 : -1 //halfplane
     this.vec=(this.hp*this.m>0 || (this.m===0 && this.hp>0)) ? [1,this.m] : [-1,-this.m] //direction
   }
+
+   //------------------------------------------------------------------------
+
+  Segment.prototype.toString=function(){
+    return "pl:"+this.pl+"; pr:"+this.pr+"; ps:"+this.ps+"; theta:"+180/Math.PI*Math.atan2(this.vec[0], this.vec[1]);
+  }
+
+  console.log("segment.js has been imported");
+  return Segment;
 
 })

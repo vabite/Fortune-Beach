@@ -32,7 +32,8 @@ define([], function(){
     }
     exports.parabolsCrossX=parabolsCrossX;
 
-    function doHalflinesCross(sa, sb, approx=1e-10){ //sa, sb are Segment instance
+    function doHalflinesCross(sa, sb, approx){ //sa, sb are Segment instance
+      var approx=approx||1e-10;
       var dx=sb.ps[0]-sa.ps[0];
       var dy=sb.ps[1]-sa.ps[1];
       if (sa.m==Infinity) return sa.hp*(sb.m*dx-dy)<=approx && sb.vec[0]*dx<=approx;
@@ -45,7 +46,7 @@ define([], function(){
     }
     exports.doHalflinesCross=doHalflinesCross;
 
-    console.log("geom.js imported");
+    console.log("geom.js has been imported");
 
     return exports;
 
