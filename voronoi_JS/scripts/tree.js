@@ -57,7 +57,8 @@ define([], function(){
 
    //------------------------------------------------------------------------
 
-  BinaryTree.prototype.str_tree=function(path="Path: root"){
+  BinaryTree.prototype.str_tree=function(path){
+    var path=path||"root";
     if(this.item==undefined) return "Empty beachline.\n";
     var node_string=path+". "+String(this.item)+"\n";
     if(!this.isLeaf()){

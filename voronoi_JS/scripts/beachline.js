@@ -44,7 +44,7 @@ define(["tree", "segment", "geom"], function(Tree, Segment, Geom){
   }
 
   Beachline.prototype.rmArc = function (newEdgeStart, arcsNodes, edgesNodes) {
-    var [liveLArcNode, deadArcNode, liveRArcNode] = arcsNodes;
+    var [liveLArcNode, deadArcNode, liveRArcNode]=arcsNodes;
     if(deadArcNode.isRChild())
       var [liveCutBranch, midEdgeNode, topEdgeNode]=
           [edgesNodes[0].l, edgesNodes[0], edgesNodes[1]]
@@ -52,7 +52,7 @@ define(["tree", "segment", "geom"], function(Tree, Segment, Geom){
       var [liveCutBranch, midEdgeNode, topEdgeNode]=
           [edgesNodes[1].r, edgesNodes[1], edgesNodes[0]];
     topEdgeNode.item=new Segment(liveLArcNode.item, liveRArcNode.item, newEdgeStart);
-    if(midEdgeNode.isRChild()) midEdgeNode.parent.l=liveCutBranch
+    if(midEdgeNode.isRChild()) midEdgeNode.parent.r=liveCutBranch
     else midEdgeNode.parent.l=liveCutBranch;
     liveCutBranch.parent=midEdgeNode.parent;
   }

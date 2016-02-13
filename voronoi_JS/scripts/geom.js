@@ -42,7 +42,7 @@ define([], function(){
       if (det===0) return false;
       var u=(dy*sb.vec[0]-dx*sb.vec[1])/det;
       var v=(dy*sa.vec[0]-dx*sa.vec[1])/det;
-      return (u>=-approx && v>=0) || (u>=0 && v>=-approx);
+      return (u>=-approx && v>=approx) || (u>=approx && v>=-approx);
     }
     exports.doHalflinesCross=doHalflinesCross;
 
