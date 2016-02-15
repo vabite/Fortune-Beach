@@ -18,7 +18,6 @@ define([], function(){
     return "pl:"+this.pl+"; pr:"+this.pr+"; ps:"+this.ps+"; pe:"+this.pe+"; theta:"+180/Math.PI*Math.atan2(this.vec[1], this.vec[0]);
   }
 
-  console.log("segment.js has been imported");
   return Segment;
 
 })

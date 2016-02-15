@@ -46,8 +46,6 @@ define([], function(){
     }
     exports.doHalflinesCross=doHalflinesCross;
 
-    console.log("geom.js has been imported");
-
     return exports;
 
 })

@@ -68,7 +68,6 @@ define(["tree", "segment", "geom"], function(Tree, Segment, Geom){
     return node_string;
   }
 
-  console.log("beachline.js has been imported");
   return Beachline;
 
 })

@@ -68,8 +68,6 @@ define([], function(){
     return node_string;
   }
 
-  console.log("tree.js has been imported");
-
   return BinaryTree;
 
 })
