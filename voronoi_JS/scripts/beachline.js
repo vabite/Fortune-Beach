@@ -16,12 +16,9 @@ define(["tree", "segment", "geom"], function(Tree, Segment, Geom){
   Beachline.prototype.getArcNodeOnSite=function(site){
     var [curNode, solN]=[this, undefined];
     while(!curNode.isLeaf()){
-      //console.log(curNode.item);
       curNode.item.pl[1]<curNode.item.pr[1] ? solN=0 : solN=1;
       curNode = site[0]<Geom.parabolsCrossX(curNode.item.pl, curNode.item.pr, site[1])[solN] ? curNode["l"] : curNode["r"];
     };
-    //console.log(curNode.item instanceof Segment, curNode.ps);
-    //console.log("returned", curNode, curNode.item);
     return curNode;
   }
 
@@ -55,17 +52,6 @@ define(["tree", "segment", "geom"], function(Tree, Segment, Geom){
     if(midEdgeNode.isRChild()) midEdgeNode.parent.r=liveCutBranch
     else midEdgeNode.parent.l=liveCutBranch;
     liveCutBranch.parent=midEdgeNode.parent;
-  }
-
- //------------------------------------------------------------------------
-  Beachline.prototype.str_tree=function(path="Path: root"){
-    if(this.item==undefined) return "Empty beachline.\n";
-    var node_string=path+". Item: "+ String(this.item)+". cEvent:"+String(this.cEvent)+"\n";
-    if(!this.isLeaf()){
-        node_string+=this.l.str_tree(path+"->l");
-        node_string+=this.r.str_tree(path+"->r");
-      };
-    return node_string;
   }
 
   return Beachline;

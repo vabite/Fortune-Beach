@@ -5,12 +5,15 @@ define(["event", "beachline", "geom"], function(Event, Beachline, Geom){
     function Voronoi(sites){
         this.sites=sites;
         this.events=[];
-        sites.forEach(function(site){
-            new Event(site).add(this.events);
-        }, this);
         this.beach=new Beachline();
         this.edges=[];
+        this.patches=Object.create(null);
         this.iterations=0;
+        sites.forEach(function(site){
+            this.patches[site]=[];
+            new Event(site).add(this.events);
+        }, this);
+
     }
 
     Voronoi.prototype.addCircleEvent=function(arcNode, sweepY, approx){
@@ -34,7 +37,6 @@ define(["event", "beachline", "geom"], function(Event, Beachline, Geom){
             arcNode.cEvent.rm(this.events);
             arcNode.cEvent=undefined;
         }
-
     }
 
     Voronoi.prototype.manageSiteEvent=function(){
@@ -63,62 +65,25 @@ define(["event", "beachline", "geom"], function(Event, Beachline, Geom){
         this.addCircleEvent(event.arcsNodes[2], event.coord[1]);
     }
 
-    Voronoi.prototype.run=function(){
+    Voronoi.prototype.getPoints=function(){
+        return this.sites;
+    }
+
+    Voronoi.prototype.getEdges=function(){
+        var t0=new Date().getTime();
         this.beach.item=this.events.splice(0,1)[0].coord;
         this.iterations++;
         while(this.events.length>0){
             if(this.events[0].arcsNodes) this.manageCircleEvent()
             else this.manageSiteEvent();
             this.iterations++;
-
         };
+        console.log("Got edges in", new Date().getTime()-t0, "ms");
+        return this.edges;
     }
 
-    Voronoi.prototype.plotEdges=function(width, height, pointSize, pointsColor, edgesColor){
-      var t0 = new Date().getTime();
-      this.run();
-      var t1 = new Date().getTime();
-      var nSites=this.sites.length;
-      var pointSize=pointSize||4;
-
-      var canv=document.createElement('canvas');
-      canv.width=width||200;
-      canv.height=height||200;
-      canv.id='canvas';
-      document.body.appendChild(canv);
-      var ctx=canv.getContext("2d");
-      ctx.fillStyle=pointsColor||"#FF0000";
-      ctx.strokeStyle=edgesColor||"#00004c";
-
-      this.sites.forEach(function(site){
-        ctx.fillRect(site[0]-pointSize/2, site[1]-pointSize/2, pointSize, pointSize);
-      });
-
-      this.edges.forEach(function(edge){
-        ctx.moveTo(edge.ps[0],edge.ps[1]);
-        ctx.lineTo(edge.pe[0],edge.pe[1]);
-      });
-      ctx.stroke();
-
-      var t2 = new Date().getTime();
-      console.log("Completed. It took", t2-t0, "ms of which", t1-t0, "ms to run Voronoi (", this.iterations, "iterations).");
-    }
-
-    Voronoi.prototype.plotPatches=function(width, height, pointSize, pointsColor, edgesColor){
-        var t0 = new Date().getTime();
-        this.run();
-        var t1 = new Date().getTime();
-        var nSites=this.sites.length;
-        var pointSize=pointSize||4;
-
-        var canv=document.createElement('canvas');
-        canv.width=width||200;
-        canv.height=height||200;
-        canv.id='canvas';
-        document.body.appendChild(canv);
-        var ctx=canv.getContext("2d");
-        ctx.fillStyle=pointsColor||"#FF0000";
-        ctx.strokeStyle=edgesColor||"#00004c";
+    Voronoi.prototype.getPatches=function(width, height, pointSize, pointsColor, edgesColor){
+        var t0=new Date().getTime();
 
         function isIn(point, array){
             for(var i=0; i<array.length; i++){
@@ -137,39 +102,20 @@ define(["event", "beachline", "geom"], function(Event, Beachline, Geom){
             };
             vs.push(v);
         }
-        function assignEdgeBounds(edge){
-            if(!(isIn(edge.ps, patches[edge.pl].vertices)))
-                insertByAtan(patches[edge.pl].center, edge.ps, patches[edge.pl].vertices);
-            if(!(isIn(edge.ps, patches[edge.pr].vertices)))
-                insertByAtan(patches[edge.pr].center, edge.ps, patches[edge.pr].vertices);
-            if(!(isIn(edge.pe, patches[edge.pl].vertices)))
-                insertByAtan(patches[edge.pl].center, edge.pe, patches[edge.pl].vertices);
-            if(!(isIn(edge.pe, patches[edge.pr].vertices)))
-                insertByAtan(patches[edge.pr].center, edge.pe, patches[edge.pr].vertices);
+        function assignEdgeBounds(edge) {
+            if (!(isIn(edge.ps, this.patches[edge.pl])))
+                insertByAtan(edge.pl, edge.ps, this.patches[edge.pl]);
+            if (!(isIn(edge.ps, this.patches[edge.pr])))
+                insertByAtan(edge.pr, edge.ps, this.patches[edge.pr]);
+            if (!(isIn(edge.pe, this.patches[edge.pl])))
+                insertByAtan(edge.pl, edge.pe, this.patches[edge.pl]);
+            if (!(isIn(edge.pe, this.patches[edge.pr])))
+                insertByAtan(edge.pr, edge.pe, this.patches[edge.pr]);
         }
 
-        var patches=Object.create(null);
-        this.sites.forEach(function(site){
-            patches[site]={center: site, vertices:[]};
-        });
-        this.edges.forEach(assignEdgeBounds);
-        this.sites.forEach(function(site){
-            var vs=patches[site].vertices;
-            ctx.moveTo(vs[0][0], vs[0][1]);
-            for(var i=1; i<vs.length; i++)
-                ctx.lineTo(vs[i][0], vs[i][1]);
-            ctx.fillRect(site[0]-pointSize/2, site[1]-pointSize/2, pointSize, pointSize);
-        });
-        ctx.stroke();
-        var t2 = new Date().getTime();
-        console.log("Completed. It took", t2-t0, "ms of which", t1-t0, "ms to run Voronoi (", this.iterations, "iterations).");
-    }
-
-//---------------------------------------------------------------------
-    Voronoi.prototype.printObjArray= function (objs){
-        objs.forEach(function(obj){
-            console.log(String(obj));
-        })
+        this.getEdges().forEach(assignEdgeBounds, this);
+        console.log("Got patches in", new Date().getTime()-t0, "ms");
+        return this.patches;
     }
 
     return Voronoi;

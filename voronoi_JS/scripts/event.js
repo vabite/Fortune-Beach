@@ -35,13 +35,6 @@ define(["geom"], function(Geom){
       console.log("Event does not exist in list");
     }
 
-//------------------------------------------------------------------------
-    Event.prototype.toString=function(){
-      return this.edgesNodes ?
-      "Circle event. Vertex: "+this.vertexCoord+"; coord:"+this.coord :
-      "Site event. Coord:"+this.coord;
-    }
-
   }
 
   return Event;

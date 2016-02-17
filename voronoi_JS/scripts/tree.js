@@ -55,19 +55,6 @@ define([], function(){
     return [curNode, rparent]
   }
 
-   //------------------------------------------------------------------------
-
-  BinaryTree.prototype.str_tree=function(path){
-    var path=path||"root";
-    if(this.item==undefined) return "Empty beachline.\n";
-    var node_string=path+". "+String(this.item)+"\n";
-    if(!this.isLeaf()){
-        node_string+=this.l.str_tree(path+"->l");
-        node_string+=this.r.str_tree(path+"->r");
-      };
-    return node_string;
-  }
-
   return BinaryTree;
 
 })
