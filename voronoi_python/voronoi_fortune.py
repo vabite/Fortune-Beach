@@ -1,6 +1,3 @@
-# Voronoi diagram in python
-# Fortune's Algorithm in O(n*logn)
-
 import numpy as np
 import matplotlib.pyplot as plt
 import time
@@ -11,18 +8,6 @@ from matplotlib.cm import jet
 from collections import defaultdict
 
 import sys
-
-class Ordering(object):
-
-    def go_to_i(alist, elem, comparison):
-        i = 0
-        while i < len(alist) and comparison(elem, alist[i]):
-            i += 1
-        return i
-
-    def is_coord_y_greater(elem1, elem2, approx=1.0e-10):
-        return elem1.coord.y>elem2.coord.y+approx
-
 
 class Point(object):
 
@@ -37,7 +22,7 @@ class Point(object):
         return hash(str(self))
 
     def dist_to_point(self, p):
-        return np.sqrt(np.power(self.x - p.x, 2) + np.power(self.y - p.y, 2))
+        return np.sqrt(np.power(self.x-p.x, 2) + np.power(self.y-p.y, 2))
 
     def dist_to_par(self, focus):
         return np.power(self.dist_to_point(focus), 2)/(2*abs(self.y-focus.y)) if self.dist_to_point(focus)!=0 else np.inf
@@ -46,7 +31,7 @@ class Point(object):
 class Circle():
 
     def center(a, b, c):
-        d = (a.x - c.x) * (b.y - c.y) - (b.x - c.x) * (a.y - c.y)
+        d=(a.x-c.x)*(b.y-c.y)-(b.x-c.x)*(a.y-c.y)
         if d==0:
             return Point(np.inf, np.inf)
         xc=(((a.x-c.x)*(a.x+c.x)+(a.y-c.y)*(a.y+c.y))/2*(b.y-c.y)-((b.x-c.x)*(b.x+c.x)+(b.y-c.y)*(b.y+c.y))/2*(a.y-c.y))/d
@@ -64,7 +49,6 @@ class Parabol():
         else:
             return ((f1.x+f2.x)/2, (f1.x+f2.x)/2)
 
-
 class Segment(object):
 
     def __init__(self,  pl=None, pr=None, start=None, end=None):
@@ -80,15 +64,14 @@ class Segment(object):
         s2=self if s2==None else s2
         (dx, dy) = (s2.start.x - s1.start.x, s2.start.y - s1.start.y)
         if s2.m==np.inf:
-            return True if s2.hp*(s1.m*dx-dy)>=-approx and s1.vec.x*dx>=-approx else False
+            return s2.hp*(s1.m*dx-dy)>=-approx and s1.vec.x*dx>=-approx
         if s1.m==np.inf:
-            return True if s1.hp*(s2.m*dx-dy)<=approx and s2.vec.x*dx<=approx else False
+            return s1.hp*(s2.m*dx-dy)<=approx and s2.vec.x*dx<=approx
         det=s2.vec.x*s1.vec.y-s2.vec.y*s1.vec.x
         if det==0:
             return False
         (u,v)=((dy*s2.vec.x-dx*s2.vec.y)/det,(dy*s1.vec.x-dx*s1.vec.y)/det)
-        return True if (u>=-approx and v>=approx) or (u>=approx and v>=-approx) else False
-
+        return (u>=-approx and v>=approx) or (u>=approx and v>=-approx)
 
 class Tree(object):
 
@@ -102,7 +85,7 @@ class Tree(object):
         return self.parent==None
 
     def is_leaf(self):
-        return self.l==None
+        return self.l==None and self.r==None #non necessario nel caso di beachline: ne basta uno
 
     def is_lchild(self):
         return not self.is_root() and self.parent.l==self
@@ -149,6 +132,9 @@ class Beachline(Tree):
         super().__init__(item, parent, l, r)
         self.c_event=c_event
 
+    def is_leaf(self):
+        return self.l==None #sovrascrive is_leaf dei tree: una foglia non ha nessuno dei die figli
+
     def get_arc_node_on_site(self, new_site):
         cur_node=self
         while isinstance(cur_node.item, Segment):
@@ -156,8 +142,8 @@ class Beachline(Tree):
             cur_node=cur_node.l if new_site.x<(Parabol.cross_x(cur_node.item.pl, cur_node.item.pr, new_site.y)[sol]) else cur_node.r
         return cur_node
 
-    def add_arc(self, new_arc_site, arc_nodes):
-        (larc_node, crossed_arc_node, rarc_node)=arc_nodes
+    def add_arc(self, new_arc_site, arcs_nodes):
+        (larc_node, crossed_arc_node, rarc_node)=arcs_nodes
         crossed_arc_site=crossed_arc_node.item
         cross_point = Point(new_arc_site.x, new_arc_site.y-new_arc_site.dist_to_par(crossed_arc_site))
         new_lhalfedge=Segment(pl=crossed_arc_site, pr=new_arc_site, start=cross_point)
@@ -178,7 +164,7 @@ class Beachline(Tree):
             (live_cut_branch, mid_edge_node, top_edge_node)=(edges_nodes[0].l, edges_nodes[0], edges_nodes[1])
         else:
             (live_cut_branch, mid_edge_node, top_edge_node)=(edges_nodes[1].r, edges_nodes[1], edges_nodes[0])
-        top_edge_node.item = Segment(pl=live_larc_node.item, pr=live_rarc_node.item, start=new_edge_start, end=None)
+        top_edge_node.item=Segment(pl=live_larc_node.item, pr=live_rarc_node.item, start=new_edge_start, end=None)
         if mid_edge_node.is_rchild():
             mid_edge_node.parent.r=live_cut_branch
         else:
@@ -188,25 +174,31 @@ class Beachline(Tree):
 
 class Event(object):
 
-    def __init__(self, arc_site_or_nodes):
+    def __init__(self, arc_site_or_nodes, coord=None, vertex_coord=None):
         if isinstance(arc_site_or_nodes, Point):
             self.coord=arc_site_or_nodes
             self.arcs_nodes=None
         else:
             self.arcs_nodes=[arc_site_or_nodes[0], arc_site_or_nodes[2], arc_site_or_nodes[4]]
             self.edges_nodes=[arc_site_or_nodes[1], arc_site_or_nodes[3]]
-            self.vertex_coord=Circle.center(self.arcs_nodes[0].item, self.arcs_nodes[1].item, self.arcs_nodes[2].item)
-            self.coord=Point(self.vertex_coord.x,self.vertex_coord.y+self.arcs_nodes[0].item.dist_to_point(self.vertex_coord))
+            self.vertex_coord=vertex_coord
+            self.coord=coord
 
     def __eq__(self, e):
         return isinstance(e, Event) and self.arcs_nodes==e.arcs_nodes and self.coord==e.coord
 
+    def go_to_event_index(self, es, approx=1.0e-10):
+        i=0
+        while i<len(es) and self.coord.y>es[i].coord.y+approx:
+            i+=1
+        return i
+
     def add(self, es):
-        i=Ordering.go_to_i(es, self, Ordering.is_coord_y_greater)
+        i=self.go_to_event_index(es)
         es.insert(i, self)
 
     def rm(self, es):
-        i=Ordering.go_to_i(es, self, Ordering.is_coord_y_greater)
+        i=self.go_to_event_index(es)
         while True:
             if i==len(es)-1 or self.coord.y != es[i+1].coord.y or self==es[i]:
                 return es.pop(i)
@@ -218,11 +210,11 @@ class Voronoi(object):
     def __init__(self, sites):
         self.sites=sites  #siti di V, obj Point
         self.events=[]
-        self.iterations=0 #inserito per il calcolo delle iterazioni, ma non necessario alla creazione del diagramma
         for site in sites:
             Event(site).add(self.events)
         self.beach=Beachline()
         self.edges=[]
+        self.iterations=0 #inserito per il calcolo delle iterazioni, ma non necessario alla creazione del diagramma
 
     def rm_circle_event(self, arc_node):
         if arc_node.c_event != None:
@@ -234,13 +226,13 @@ class Voronoi(object):
         rarc_node, redge_node = arc_node.get_rleaf_and_rparent()
         if larc_node==None or rarc_node==None or larc_node.item==rarc_node.item or not ledge_node.item.does_intersect(redge_node.item):
             return
-        cc = Circle.center(larc_node.item, arc_node.item, rarc_node.item)
-        if cc.y==np.inf:
+        vertex_coord = Circle.center(larc_node.item, arc_node.item, rarc_node.item)
+        if vertex_coord.y==np.inf:
             return
-        event_coord=Point(cc.x, cc.y+arc_node.item.dist_to_point(cc))
+        event_coord=Point(vertex_coord.x, vertex_coord.y+arc_node.item.dist_to_point(vertex_coord))
         if event_coord.y<sweep_y-approx:
             return
-        arc_node.c_event=Event([larc_node, ledge_node, arc_node, redge_node, rarc_node])
+        arc_node.c_event=Event([larc_node, ledge_node, arc_node, redge_node, rarc_node], event_coord, vertex_coord)
         arc_node.c_event.add(self.events)
 
     def manage_site_event(self):
@@ -272,8 +264,10 @@ class Voronoi(object):
             self.manage_site_event() if self.events[0].arcs_nodes==None else self.manage_circle_event()
             self.iterations+=1
 
-    def plot_edges(self, x_range, y_range, file_name="voronoi_script_edges.png"):
+    def plot_edges(self, x_range, y_range, file_name="voronoi_e1.png"):
+        t0=time.time()
         self.run()
+        print("Time to run Voronoi: %.4f seconds." % (time.time()-t0))
         lines = [[(edge.start.x, edge.start.y),(edge.end.x, edge.end.y)] for edge in self.edges]
         lc = mc.LineCollection(lines)
         fig, ax = plt.subplots()
@@ -284,8 +278,10 @@ class Voronoi(object):
         ax.plot(xs, ys, 'ro')
         fig.savefig(file_name)
 
-    def plot_patches(self, x_range, y_range, file_name="voronoi_script_patches.png"):
+    def plot_patches(self, x_range, y_range, file_name="voronoi_p1.png"):
+        t0=time.time()
         self.run()
+        print((time.time()-t0))
         pts = self.sites
         pts_dict = defaultdict(list)
         patches = []
